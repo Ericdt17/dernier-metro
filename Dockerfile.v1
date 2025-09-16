@@ -1,0 +1,16 @@
+# Dockerfile.v1
+FROM node:18-alpine
+WORKDIR /app
+
+# Dépendances (cache-friendly)
+COPY package*.json ./
+RUN npm install --production
+
+# Code
+COPY . .
+
+# Port interne exposé par l’app
+EXPOSE 3000
+
+# Démarrage
+CMD ["node", "server.js"]
