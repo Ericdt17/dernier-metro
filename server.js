@@ -1,13 +1,10 @@
+const express = require("express");
+const app = express();
 const TZ = "Europe/Paris";
+const line = "M1"; // Ligne simulée
+
 const swaggerUi = require("swagger-ui-express");
 
-function pad2(n) {
-  return String(n).padStart(2, "0");
-}
-
-function toHM(date) {
-  return `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
-}
 /**
  * Calcule le prochain passage simulé.
  * Règles:
@@ -17,31 +14,22 @@ function toHM(date) {
  *  - Hors plage: { service: "closed", tz }
  */
 function nextArrival(now = new Date(), headwayMin = 3) {
-  const start = new Date(now);
-  start.setHours(5, 30, 0, 0); // 05:30
-  const lastWindow = new Date(now);
-  lastWindow.setHours(0, 45, 0, 0); // 00:45
-  const end = new Date(now);
-  end.setHours(1, 15, 0, 0); // 01:15
+  const tz = "Europe/Paris";
+  const toHM = (d) =>
+    String(d.getHours()).padStart(2, "0") +
+    ":" +
+    String(d.getMinutes()).padStart(2, "0");
 
-  // Hors plage horaire (avant 05:30 ou après 01:15)
-  if (now < start || now > end) {
-    return { service: "closed", tz: TZ };
-  }
+  const m = now.getHours() * 60 + now.getMinutes(); // 0..1439
+  const serviceOpen = m >= 330 || m <= 75; // 05:30–24:00 OR 00:00–01:15
+  if (!serviceOpen) return { service: "closed", tz };
 
+  const isLast = m >= 45 && m <= 75; // 00:45–01:15
   const next = new Date(now.getTime() + headwayMin * 60 * 1000);
 
-  return {
-    headwayMin,
-    nextArrival: toHM(next),
-    isLast: now >= lastWindow && now <= end,
-    tz: TZ,
-  };
+  return { nextArrival: toHM(next), isLast, headwayMin, tz };
 }
 
-const express = require("express");
-
-const app = express();
 app.use((req, res, next) => {
   const start = Date.now();
   res.on("finish", () => {
