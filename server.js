@@ -39,7 +39,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// OpenAPI (Swagger) spec
+
 const swaggerDocument = {
   openapi: "3.0.0",
   info: {
@@ -158,7 +158,7 @@ app.get("/next-metro", (req, res) => {
   }
   const result = nextArrival(new Date(), 3);
 
-  // Si service fermé, on renvoie un 200 documenté (option choisie)
+  // Si service fermé, on renvoie un 200 documenté 
   if (result.service === "closed") {
     return res.json({ station, service: "closed", tz: TZ });
   }
